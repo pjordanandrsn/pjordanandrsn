@@ -4,6 +4,8 @@ I find the gap between what an institution's contract claims and what its implem
 
 Current arc — **large Mixture-of-Experts LLMs on GPUs people actually own**: make the weights fit, make the 4-bit compute path fast, and adjudicate every performance claim under preregistered, [OpenTimestamps-stamped protocols](https://cerinamroth.com/ml/grouped-nf4-gemm/) — failures published at the same volume as wins.
 
+**Fine-tune a 120B MoE at 9.82 GB, and prove with hashes that the expert weights are still byte-identical to the vendor's release.**
+
 - [`grouped-nf4-gemm`](https://github.com/pjordanandrsn/grouped-nf4-gemm) [![PyPI](https://img.shields.io/pypi/v/grouped-nf4-gemm)](https://pypi.org/project/grouped-nf4-gemm/) — a Triton kernel that runs the grouped expert GEMM **directly on the 4-bit-packed weights** — one launch for all active experts, codebook decoded in registers, no dequantize-to-bf16 round trip.
   - Flagship: **Qwen3-235B-A22B decoding coherent text at 4.3–4.4 tok/s on 15.2 GB of VRAM**, experts streamed from pinned host RAM at 93–94 % of the measured bus ceiling.
   - The strongest objection — that bitsandbytes' own CUDA dequant kernel would also hide under the copy shadow — was registered as a prediction and **refuted**: 2.33× throughput, 2.21× energy on the identical pipeline.
@@ -18,7 +20,11 @@ Current arc — **large Mixture-of-Experts LLMs on GPUs people actually own**: m
   - **Qwen3-30B-A3B QLoRA peaks at 7.16 GB, Gemma-4-26B-A4B at 8.47 GB** — both OOM without it.
   - The seed-matched A/B ([`ab-telemetry/`](https://github.com/pjordanandrsn/experts4bit-qlora/tree/main/ab-telemetry)) shows **−57 % peak VRAM with convergence preserved**, at ~+11 % s/step.
   - `enable_fast(model)` routes frozen-expert inference through the fused kernel (3.65× at bs=1); pipelined residency converts spare VRAM into decode speed, with hot sets picked from a routing histogram rather than by index (**+19–120 %** over the all-cold floor — measured on thin-link hosts, ≈0 on fat-PCIe boxes; the scoping is in the receipts).
-- Upstream: [bitsandbytes#1965](https://github.com/bitsandbytes-foundation/bitsandbytes/pull/1965) — open — `Experts4bit` as a deliberately clean 4-bit diff, the N-bit generalization staged behind it, all CI legs green · [axolotl#3797](https://github.com/axolotl-ai-cloud/axolotl/pull/3797) — open — `expert_offload` as a self-contained plugin, seed-matched A/B including DDP arms · [unsloth-zoo#915](https://github.com/unslothai/unsloth-zoo/pull/915) — open — OLMoE `load_in_4bit` crash: route the fused experts through the MoE backend · [unsloth-zoo#849](https://github.com/unslothai/unsloth-zoo/issues/849) — silent expert-weight transposition, filed with a repro harness; maintainer-verified at 358×/387× the bf16 noise floor on a B200 and fixed upstream — merged
+- Upstream (MoE stack):
+  - [bitsandbytes#1965](https://github.com/bitsandbytes-foundation/bitsandbytes/pull/1965) — open — `Experts4bit` as a deliberately clean 4-bit diff, the N-bit generalization staged behind it, all CI legs green
+  - [axolotl#3797](https://github.com/axolotl-ai-cloud/axolotl/pull/3797) — open — `expert_offload` as a self-contained plugin, seed-matched A/B including DDP arms
+  - [unsloth-zoo#915](https://github.com/unslothai/unsloth-zoo/pull/915) — open — OLMoE `load_in_4bit` crash: route the fused experts through the MoE backend
+  - [unsloth-zoo#849](https://github.com/unslothai/unsloth-zoo/issues/849) — silent expert-weight transposition, filed with a repro harness; maintainer-verified at 358×/387× the bf16 noise floor on a B200 and fixed upstream — merged
 
 **Intel GPU (OpenVINO)** — `__local`-pointer kernel-compile fixes across the LoRA / MoE / fully-connected kernels, plus a regression test so the bug class can't silently return ([#35661](https://github.com/openvinotoolkit/openvino/pull/35661), [#35712](https://github.com/openvinotoolkit/openvino/pull/35712), [#36017](https://github.com/openvinotoolkit/openvino/pull/36017) — all merged), with a core input-validation sweep ([#36543](https://github.com/openvinotoolkit/openvino/pull/36543) — in review). [`ov-impact-bench`](https://github.com/pjordanandrsn/ov-impact-bench) measures what the fixes unlock on real Intel silicon.
 
