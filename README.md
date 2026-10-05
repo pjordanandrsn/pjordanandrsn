@@ -8,6 +8,7 @@
 
 <p>
   <a href="https://github.com/pjordanandrsn/loggetta"><img src="https://img.shields.io/badge/Loggetta-planner-6F42C1" alt="Loggetta"></a>
+  <a href="https://pypi.org/project/loggetta/"><img src="https://img.shields.io/pypi/v/loggetta?label=loggetta" alt="loggetta"></a>
   <a href="https://pypi.org/project/experts4bit-qlora/"><img src="https://img.shields.io/pypi/v/experts4bit-qlora?label=experts4bit-qlora" alt="experts4bit-qlora"></a>
   <a href="https://pypi.org/project/grouped-nf4-gemm/"><img src="https://img.shields.io/pypi/v/grouped-nf4-gemm?label=grouped-nf4-gemm" alt="grouped-nf4-gemm"></a>
 </p>
@@ -46,7 +47,7 @@ flowchart LR
 | **Runtime** | [`experts4bit-qlora`](https://github.com/pjordanandrsn/experts4bit-qlora) | Load, train, serve, offload, and adapt fused MoE experts using the configuration selected by the planner. |
 | **Kernels** | [`grouped-nf4-gemm`](https://github.com/pjordanandrsn/grouped-nf4-gemm) | Execute grouped expert compute directly on packed low-bit weights and provide the low-level residency primitives below the runtime. |
 
-### `loggetta`
+### [`loggetta`](https://github.com/pjordanandrsn/loggetta) [![PyPI](https://img.shields.io/pypi/v/loggetta)](https://pypi.org/project/loggetta/)
 
 **Planner + `ExecutionPlan` + `ExecutionReceipt`.**
 
