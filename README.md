@@ -1,92 +1,121 @@
+<div align="center">
+
 # Jordan Anderson
 
-**ML systems engineer building the planner, runtime, and kernel layers for large models on constrained hardware.**
+### ML systems · low-bit MoE · constrained-GPU runtime engineering
 
-I tend to find the gap between what a software contract says and what the implementation actually does, then build the missing layer.
+**Planner → runtime → kernels, with receipts all the way down.**
 
-Current arc: **large Mixture-of-Experts models on GPUs people actually own**. Make the weights fit, make packed low-bit compute fast, decide what should run before loading it, and keep enough evidence around that every performance claim can be audited later.
+<p>
+  <a href="https://github.com/pjordanandrsn/loggetta"><img src="https://img.shields.io/badge/Loggetta-planner-6F42C1" alt="Loggetta"></a>
+  <a href="https://pypi.org/project/experts4bit-qlora/"><img src="https://img.shields.io/pypi/v/experts4bit-qlora?label=experts4bit-qlora" alt="experts4bit-qlora"></a>
+  <a href="https://pypi.org/project/grouped-nf4-gemm/"><img src="https://img.shields.io/pypi/v/grouped-nf4-gemm?label=grouped-nf4-gemm" alt="grouped-nf4-gemm"></a>
+</p>
 
-> **A 120B MoE QLoRA-trains at 9.82 GB peak VRAM, with 144/144 frozen expert hashes byte-identical after training.**
+<p>
+  <a href="https://cerinamroth.com">Research notes</a> ·
+  <a href="https://jordananderson.work">Work</a> ·
+  <a href="https://cerinamroth.com/policy/">Security policy</a>
+</p>
 
-## The stack
+</div>
+
+---
+
+I build the missing layer between **“this should fit”** and **“here is the receipt proving what actually happened.”**
+
+My current work is a three-layer systems stack for running and fine-tuning large Mixture-of-Experts models on hardware far smaller than the model:
 
 ```mermaid
 flowchart LR
-    I["workload + machine<br/>constraints + evidence"] --> L["Loggetta<br/>Planner"]
-    L --> P["ExecutionPlan<br/>what should run + why"]
-    P --> E["experts4bit-qlora<br/>training + serving runtime"]
-    E --> G["grouped-nf4-gemm<br/>packed low-bit kernels"]
-    E --> M["measurements"]
-    M --> R["Loggetta<br/>ExecutionReceipt"]
-    R -. "measured feedback" .-> L
+    A["workload + machine<br/>constraints + evidence"] --> B["Loggetta<br/>Planner"]
+    B --> C["ExecutionPlan<br/>what should run + why"]
+    C --> D["experts4bit-qlora<br/>training + serving runtime"]
+    D --> E["grouped-nf4-gemm<br/>packed low-bit kernels"]
+    D --> F["ExecutionReceipt<br/>what actually happened"]
+    F -. "measured feedback" .-> B
 ```
 
-### [`loggetta`](https://github.com/pjordanandrsn/loggetta) ![CI](https://github.com/pjordanandrsn/loggetta/actions/workflows/ci.yml/badge.svg)
+> **120B MoE QLoRA at 9.82 GB peak VRAM, with 144/144 frozen expert hashes byte-identical after training.**
 
-**Planner + `ExecutionPlan` + `ExecutionReceipt`.** Loggetta turns a workload, a machine, and constraints into an inspectable execution plan before model weights are loaded.
+## The stack
 
-- Chooses among supported configurations under explicit VRAM, RAM, residency, and objective constraints.
-- Records the winner, rejected alternatives, refusal reasons, warnings, and evidence quality.
-- Delegates execution to the backend rather than reimplementing the runtime.
-- Feeds measured receipts back into future planning.
-- On an RTX 5090 Qwen3-30B-A3B run, the receipt-calibrated planned process peak was **24.54 GiB vs 24.34 GiB measured**.
+| Layer | Project | Job |
+| :--- | :--- | :--- |
+| **Planner** | [`loggetta`](https://github.com/pjordanandrsn/loggetta) | Turn a workload, machine, constraints, and evidence into an inspectable `ExecutionPlan`; refuse impossible plans before loading weights; feed `ExecutionReceipt`s back into future planning. |
+| **Runtime** | [`experts4bit-qlora`](https://github.com/pjordanandrsn/experts4bit-qlora) | Load, train, serve, offload, and adapt fused MoE experts using the configuration selected by the planner. |
+| **Kernels** | [`grouped-nf4-gemm`](https://github.com/pjordanandrsn/grouped-nf4-gemm) | Execute grouped expert compute directly on packed low-bit weights and provide the low-level residency primitives below the runtime. |
 
-Core rule: **Loggetta decides what should execute. The backend knows how to execute it.**
+### `loggetta`
 
-### [`experts4bit-qlora`](https://github.com/pjordanandrsn/experts4bit-qlora) [![PyPI](https://img.shields.io/pypi/v/experts4bit-qlora)](https://pypi.org/project/experts4bit-qlora/)
+**Planner + `ExecutionPlan` + `ExecutionReceipt`.**
 
-**Training and serving runtime for fused MoE experts.** It handles the model-side mechanisms that the planner selects.
+- Same inputs → deterministic, serializable plan.
+- Records the winning setup, rejected alternatives, refusal reasons, warnings, budget sources, and evidence quality.
+- Delegates execution to the backend rather than absorbing runtime logic.
+- On RTX 5090 / Qwen3-30B-A3B, receipt-calibrated process peak: **24.54 GiB planned vs 24.34 GiB measured**.
 
-- 4-bit quantization of fused expert stacks that bitsandbytes' normal walker silently skips ([bitsandbytes#1849](https://github.com/bitsandbytes-foundation/bitsandbytes/issues/1849)).
-- Streaming loading, per-expert LoRA, layer-granular expert offload, training engines, and serving residency.
+> **Loggetta decides what should execute. The backend knows how to execute it.**
+
+### `experts4bit-qlora`
+
+**Training and serving runtime for fused MoE experts.**
+
+- Quantizes fused expert stacks that bitsandbytes’ normal walker silently skips ([bitsandbytes#1849](https://github.com/bitsandbytes-foundation/bitsandbytes/issues/1849)).
+- Streaming loader, per-expert LoRA, layer-granular expert offload, training engines, and serving residency.
 - **Qwen3-30B-A3B QLoRA: 7.16 GB peak VRAM.**
 - **Gemma-4-26B-A4B QLoRA: 8.47 GB peak VRAM.**
 - Seed-matched A/B: **57% lower peak VRAM with convergence preserved**, at about +11% seconds/step.
-- `enable_fast(model)` routes frozen-expert inference through the packed expert kernel; pipelined residency turns spare VRAM into decode speed.
 
-### [`grouped-nf4-gemm`](https://github.com/pjordanandrsn/grouped-nf4-gemm) [![PyPI](https://img.shields.io/pypi/v/grouped-nf4-gemm)](https://pypi.org/project/grouped-nf4-gemm/)
+### `grouped-nf4-gemm`
 
-**Packed low-bit compute and residency primitives.** The grouped expert GEMM operates directly on packed weights, with codebook decode in registers rather than a dequantize-to-bf16 round trip.
+**Packed low-bit compute without the dequantize-to-bf16 round trip.**
 
-- **Qwen3-235B-A22B: 4.3-4.4 tok/s while using 15.2 GB VRAM**, with experts streamed from pinned host RAM at 93-94% of the measured PCIe ceiling.
-- Against the identical pipeline with bitsandbytes dequantization: **2.33x throughput and 2.21x energy efficiency**.
-- MXFP4 can operate on a checkpoint's released bytes without imposing a requantization tax.
-- NVMe extends the residency pyramid from VRAM / host RAM to disk with deterministic, provenance-preserving arena bakes.
-- MI300X correctness has been confirmed at the same fidelity tier: **44/44**.
+- Grouped expert GEMM operates directly on packed weights; codebook decode happens in registers.
+- **Qwen3-235B-A22B: 4.3–4.4 tok/s at 15.2 GB VRAM**, with expert streaming at 93–94% of the measured PCIe ceiling.
+- Identical-pipeline comparison vs bitsandbytes dequantization: **2.33× throughput, 2.21× energy efficiency**.
+- NVMe extends the residency pyramid from VRAM → host RAM → disk with deterministic, provenance-preserving arena bakes.
+- MI300X correctness: **44/44** at the same fidelity tier.
 
 ## Receipts-driven engineering
 
-I care as much about the experiment boundary as the winning number.
+I treat measurement infrastructure as part of the system, not garnish added after the benchmark.
 
-- Performance claims are tied to the box, software stack, workload, and receipt that produced them.
-- Important comparisons are preregistered and [OpenTimestamps-stamped](https://cerinamroth.com/ml/grouped-nf4-gemm/).
-- Refuting runs are published alongside successful ones.
-- Frozen-weight integrity is checked with hashes rather than assumed.
-- Measured, derived, inferred, and heuristic quantities stay distinguishable.
+| Principle | Practice |
+| :--- | :--- |
+| **Scope every claim** | Box, driver, software stack, workload, and exact code revision travel with the result. |
+| **Pre-register hard comparisons** | Important protocols are [OpenTimestamps-stamped](https://cerinamroth.com/ml/grouped-nf4-gemm/) before the result is known. |
+| **Publish refutations** | Failed confirmatories stay public rather than disappearing into the floorboards. |
+| **Check invariants** | Frozen expert bytes are hash-checked before and after training. |
+| **Label uncertainty** | Measured, derived, inferred, and heuristic quantities remain distinct. |
 
-The method is the part I expect to transfer: [**Receipts-driven engineering**](https://cerinamroth.com/ml/grouped-nf4-gemm/).
+The method is documented here: [**Receipts-driven engineering**](https://cerinamroth.com/ml/grouped-nf4-gemm/).
 
-## Upstream work
+## Upstream
 
-Current MoE-stack work includes:
+### MoE ecosystem
 
-- [bitsandbytes#1965](https://github.com/bitsandbytes-foundation/bitsandbytes/pull/1965) - `Experts4bit` for 4-bit fused MoE experts
-- [axolotl#3797](https://github.com/axolotl-ai-cloud/axolotl/pull/3797) - `expert_offload` as a self-contained integration
-- [unsloth-zoo#915](https://github.com/unslothai/unsloth-zoo/pull/915) - OLMoE `load_in_4bit` fused-expert routing fix
-- [unsloth-zoo#849](https://github.com/unslothai/unsloth-zoo/issues/849) - silent expert-weight transposition, reproduced and fixed upstream
+- [`bitsandbytes#1965`](https://github.com/bitsandbytes-foundation/bitsandbytes/pull/1965) · `Experts4bit` for fused 4-bit MoE experts
+- [`axolotl#3797`](https://github.com/axolotl-ai-cloud/axolotl/pull/3797) · `expert_offload` integration
+- [`unsloth-zoo#915`](https://github.com/unslothai/unsloth-zoo/pull/915) · OLMoE `load_in_4bit` fused-expert routing fix
+- [`unsloth-zoo#849`](https://github.com/unslothai/unsloth-zoo/issues/849) · silent expert-weight transposition, reproduced and fixed upstream
 
 ### Intel GPU / OpenVINO
 
-`__local`-pointer kernel-compile fixes across LoRA, MoE, and fully-connected kernels, plus regression coverage:
-[#35661](https://github.com/openvinotoolkit/openvino/pull/35661),
-[#35712](https://github.com/openvinotoolkit/openvino/pull/35712), and
-[#36017](https://github.com/openvinotoolkit/openvino/pull/36017) are merged.
-[#36543](https://github.com/openvinotoolkit/openvino/pull/36543) extends the input-validation cleanup.
-[`ov-impact-bench`](https://github.com/pjordanandrsn/ov-impact-bench) measures what those fixes unlock on real Intel silicon.
+Kernel-compile fixes across LoRA, MoE, and fully-connected paths plus regression coverage:
+[`#35661`](https://github.com/openvinotoolkit/openvino/pull/35661),
+[`#35712`](https://github.com/openvinotoolkit/openvino/pull/35712), and
+[`#36017`](https://github.com/openvinotoolkit/openvino/pull/36017) are merged.
+[`#36543`](https://github.com/openvinotoolkit/openvino/pull/36543) extends the core input-validation cleanup.
+
+[`ov-impact-bench`](https://github.com/pjordanandrsn/ov-impact-bench) measures the actual GPU-vs-CPU-fallback impact on Intel hardware.
 
 ## Elsewhere
 
-Security research on the side, with good-faith testing and coordinated disclosure: [policy](https://cerinamroth.com/policy/).
+Security research on the side, with good-faith testing and coordinated disclosure.
 
-Research and engineering notes: [cerinamroth.com](https://cerinamroth.com)  
-Consulting and broader work: [jordananderson.work](https://jordananderson.work)
+<div align="center">
+
+[**cerinamroth.com**](https://cerinamroth.com) · [**jordananderson.work**](https://jordananderson.work)
+
+</div>
