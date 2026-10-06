@@ -65,6 +65,16 @@ Receipts preserve code revisions, hardware, memory, timings, and checks that the
 
 [Receipts-driven engineering](https://cerinamroth.com/research/receipts-driven-engineering/) · [Runtime claims register](https://github.com/pjordanandrsn/experts4bit-qlora/blob/main/docs/claims.json) · [Kernel claims register](https://github.com/pjordanandrsn/grouped-nf4-gemm/blob/main/docs/claims.json)
 
+## Contact securely
+
+[Download my public GPG key](https://jordananderson.work/.well-known/jordananderson-pubkey.asc) · [Verify on my website](https://jordananderson.work/#public-key) · [Repository copy](assets/jordananderson-pubkey.asc)
+
+Ed25519 · expires **11 June 2028**. Primary fingerprint:
+
+```text
+DAEF C03B 9188 793C 80E5 20C8 68F0 6663 C7FB 250F
+```
+
 ## Beyond the stack
 
 - **Upstream systems work:** [OpenVINO GPU kernel fixes](https://cerinamroth.com/ml/openvino/), plus merged fixes in [bitsandbytes #1999](https://github.com/bitsandbytes-foundation/bitsandbytes/pull/1999), [Transformers #47931](https://github.com/huggingface/transformers/pull/47931), and [Unsloth Zoo #1082](https://github.com/unslothai/unsloth-zoo/pull/1082).
