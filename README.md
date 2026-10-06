@@ -2,9 +2,12 @@
 
 # Jordan Anderson
 
-### ML systems · low-bit MoE · constrained-GPU execution
+### Faster MoE training · larger models · constrained-GPU execution
 
-**One install. Plan. Run. Measure. Keep the evidence.**
+**Qwen3-30B-A3B on an RTX 5090: 2.35× training speed vs Unsloth at matched work.**
+
+3.494 vs 8.218 s/step on the same torch/transformers stack, with comparable held-out loss.  
+Replicated on a second host at **2.468×**.
 
 <p>
   <a href="https://github.com/pjordanandrsn/loggetta"><img src="https://img.shields.io/badge/Loggetta-full%20stack-6F42C1" alt="Loggetta"></a>
@@ -26,6 +29,19 @@
 I build the missing layer between **“this should fit”** and **“here is what actually ran.”**
 
 My current work is a small systems stack for running and fine-tuning large Mixture-of-Experts models on hardware far smaller than the model.
+
+## Measured speed
+
+| Result | Comparison |
+| :--- | :--- |
+| **2.352× vs Unsloth** | Qwen3-30B-A3B QLoRA on one RTX 5090, matched adapters/init/tokens and the same torch 2.12.1+cu130 / transformers 5.5.0 stack: **3.494 vs 8.218 s/step**. Held-out loss at N=60 was **0.7569 vs 0.7557** and graded COMPARABLE. Unsloth used less peak VRAM: **24.27 vs 27.49 GB**. |
+| **2.468× replication** | Same-stack Qwen3-30B-A3B comparison on a second RTX 5090 host: e4b **4.143 / 4.073 s/step** vs Unsloth **10.155 / 10.120 s/step**. |
+| **2.775× vs Axolotl** | Matched-work Qwen3-30B-A3B comparison on an RTX 5090 / Ryzen 9 9950X3D host: **2.147 vs 5.956 s/step**. A separate EPYC-host reading was **1.979×**, so the ratio is explicitly host-sensitive. |
+| **2.33× packed-compute throughput** | H100 synthetic expert-offload pipeline vs bitsandbytes CUDA dequantization + cuBLAS: **6.466 vs 2.773 pipeline tok/s**, **26.8 vs 59.1 J/token**. This is a pipeline result, not an end-to-end serving claim. |
+
+Evidence: [same-stack Unsloth result](https://github.com/pjordanandrsn/experts4bit-qlora/blob/main/bench/h2h-2026-10-02/tc1/RESULTS-tc1-samestack-box4.md) · [second-host replication](https://github.com/pjordanandrsn/experts4bit-qlora/blob/main/changelog.d/tc1-amendment-42-read-samestack-host2.md) · [matched Axolotl/Unsloth result](https://github.com/pjordanandrsn/experts4bit-qlora/blob/main/bench/h2h-2026-10-02/tc1/RESULTS-tc1-matched19.md) · [H100 bnb comparison](https://github.com/pjordanandrsn/grouped-nf4-gemm/blob/main/bench/phase3/flagship/RESULTS-flagship-bnb-baseline.md)
+
+> These are scoped measurements of the runtime/kernel stack behind Loggetta, not speedups attributed to the planner. Ratios are within-box readings, not numbers divided across machines.
 
 ## Start with Loggetta
 
