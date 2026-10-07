@@ -21,7 +21,7 @@ loggetta plan Qwen/Qwen3-30B-A3B --seq 2048
 ```
 
 **One install. Check the machine, plan a supported training run, and keep the results.**
-The new custom-data and adapter-save workflow has [merged on main](https://github.com/pjordanandrsn/loggetta/blob/main/docs/TRAINING.md) for 0.2.0; PyPI currently serves 0.1.3.
+Training on your own data, with reusable adapters, is [on main](https://github.com/pjordanandrsn/loggetta/blob/main/docs/TRAINING.md) and ships in 0.3.0.
 
 | Project | What it does |
 | :--- | :--- |
@@ -33,7 +33,7 @@ The new custom-data and adapter-save workflow has [merged on main](https://githu
 
 - **2.352× training speed vs Unsloth** on Qwen3-30B-A3B / RTX 5090: 3.494 vs 8.218 s/step, matched work and software, comparable held-out loss. Unsloth used 3.22 GB less peak VRAM. [Benchmark](https://github.com/pjordanandrsn/experts4bit-qlora/blob/main/bench/h2h-2026-10-02/tc1/RESULTS-tc1-samestack-box4.md); [second host: 2.468×](https://github.com/pjordanandrsn/experts4bit-qlora/blob/main/bench/h2h-2026-10-02/tc1/RESULTS-tc1-samestack-host2.md).
 - **120B QLoRA experiment at 9.82 GB peak VRAM**, using host memory. All 144 frozen expert tensors stayed byte-identical after training. [Native-MXFP4 experiment](https://github.com/pjordanandrsn/grouped-nf4-gemm/blob/main/docs/mxfp4/RESULTS-mxfp4-train.md).
-- **Packed 4K training now completes at current defaults:** 1.453× vs Unsloth on the tested RTX 5090 / torch 2.12 stack, with higher peak VRAM. This uses e4b development code after 0.48.0. [Latest result and limits](https://github.com/pjordanandrsn/experts4bit-qlora/blob/main/bench/h2h-2026-10-02/tc1/RESULTS-tc1-packed4k-defaults.md).
+- **Long 4,096-token rows:** 1.453× vs Unsloth on an RTX 5090, with higher peak VRAM (defaults as of 2026-10-06). [Latest result and limits](https://github.com/pjordanandrsn/experts4bit-qlora/blob/main/bench/h2h-2026-10-02/tc1/RESULTS-tc1-packed4k-defaults.md).
 
 I publish the hardware, code, controls, and failed tests alongside the wins. [Evidence and current status](https://cerinamroth.com/research/)
 
