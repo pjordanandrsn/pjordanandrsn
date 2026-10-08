@@ -21,7 +21,7 @@ loggetta plan Qwen/Qwen3-30B-A3B --seq 2048
 ```
 
 **One install. Check the machine, plan a supported training run, and keep the results.**
-Training on your own data, with reusable adapters, is [on main](https://github.com/pjordanandrsn/loggetta/blob/main/docs/TRAINING.md) and ships in 0.3.0.
+New in 0.3.0: train on your own data and keep reusable adapters ([guide](https://github.com/pjordanandrsn/loggetta/blob/main/docs/TRAINING.md)).
 
 | Project | What it does |
 | :--- | :--- |
