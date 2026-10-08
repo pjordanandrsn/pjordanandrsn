@@ -31,9 +31,9 @@ New in 0.3.0: train on your own data and keep reusable adapters ([guide](https:/
 
 ## Results worth a look
 
-- **2.352× training speed vs Unsloth** on Qwen3-30B-A3B / RTX 5090: 3.494 vs 8.218 s/step, matched work and software, comparable held-out loss. Unsloth used 3.22 GB less peak VRAM. [Benchmark](https://github.com/pjordanandrsn/experts4bit-qlora/blob/main/bench/h2h-2026-10-02/tc1/RESULTS-tc1-samestack-box4.md); [second host: 2.468×](https://github.com/pjordanandrsn/experts4bit-qlora/blob/main/bench/h2h-2026-10-02/tc1/RESULTS-tc1-samestack-host2.md).
+- **Unsloth spends 1.92× e4b's GPU time per training step** on Qwen3-30B-A3B / RTX 5090, and 2.80× its wall-clock time on an AMD EPYC 7713 host: matched work and software, comparable held-out loss. Unsloth peaked lower (24.27 vs 26.16 GB). [Benchmark](https://github.com/pjordanandrsn/experts4bit-qlora/blob/main/bench/h2h-2026-10-02/tc1/RESULTS-tc1-pos69.md). Earlier wall-clock readings, before e4b's current defaults: 2.352× and 2.468×.
 - **120B QLoRA experiment at 9.82 GB peak VRAM**, using host memory. All 144 frozen expert tensors stayed byte-identical after training. [Native-MXFP4 experiment](https://github.com/pjordanandrsn/grouped-nf4-gemm/blob/main/docs/mxfp4/RESULTS-mxfp4-train.md).
-- **Long 4,096-token rows:** 1.453× vs Unsloth on an RTX 5090, with higher peak VRAM (defaults as of 2026-10-06). [Latest result and limits](https://github.com/pjordanandrsn/experts4bit-qlora/blob/main/bench/h2h-2026-10-02/tc1/RESULTS-tc1-packed4k-defaults.md).
+- **Long 4,096-token rows:** Unsloth spends 1.160× e4b's GPU time per step on an RTX 5090; the wall-clock ratio varies with the host (1.287–1.773×). [Latest result and limits](https://github.com/pjordanandrsn/experts4bit-qlora/blob/main/bench/h2h-2026-10-02/tc1/RESULTS-tc1-pos68.md).
 
 I publish the hardware, code, controls, and failed tests alongside the wins. [Evidence and current status](https://cerinamroth.com/research/)
 
