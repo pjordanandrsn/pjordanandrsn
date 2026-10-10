@@ -21,7 +21,7 @@ loggetta plan Qwen/Qwen3-30B-A3B --seq 2048
 ```
 
 **One install. Check the machine, plan a supported training run, and keep the results.**
-New in [Loggetta 0.4.0](https://github.com/pjordanandrsn/loggetta/blob/main/CHANGELOG.md): MoE training estimates price the `grouped_nf4` backward pass, and resident `grouped_nf4` training runs again with experts4bit-qlora 0.49.0 or later.
+New in [Loggetta 0.5.0](https://github.com/pjordanandrsn/loggetta/blob/main/CHANGELOG.md): training plans no longer borrow another model's reserve. In sample, no training plan now sits under its measured peak.
 
 | Project | What it does |
 | :--- | :--- |
