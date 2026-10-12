@@ -21,7 +21,7 @@ loggetta plan Qwen/Qwen3-30B-A3B --seq 2048
 ```
 
 **One install. Check the machine, plan a supported training run, and keep the results.**
-New in [Loggetta 0.5.0](https://github.com/pjordanandrsn/loggetta/blob/main/CHANGELOG.md): training plans no longer borrow another model's reserve. In sample, no training plan now sits under its measured peak.
+New in [Loggetta 0.6.0](https://github.com/pjordanandrsn/loggetta/blob/main/CHANGELOG.md): an AMD GPU is found and refused by name, and with experts4bit-qlora 0.53.0 or later the `grouped_nf4` MoE backward is priced once.
 
 | Project | What it does |
 | :--- | :--- |
