@@ -44,6 +44,7 @@ I publish the hardware, code, controls, and failed tests alongside the wins. [Ev
 | **OpenVINO** | Intel GPU compilation fixes and regression coverage: [#35661](https://github.com/openvinotoolkit/openvino/pull/35661), [#35712](https://github.com/openvinotoolkit/openvino/pull/35712), [#36017](https://github.com/openvinotoolkit/openvino/pull/36017). |
 | **bitsandbytes / Axolotl** | Stop checkpointed training from retaining dequantized parameters in the cache: [#1999](https://github.com/bitsandbytes-foundation/bitsandbytes/pull/1999), [#3915](https://github.com/axolotl-ai-cloud/axolotl/pull/3915). |
 | **Transformers / Unsloth Zoo** | Fix end-of-sequence handling and MoE weight preprocessing: [#47931](https://github.com/huggingface/transformers/pull/47931), [#1082](https://github.com/unslothai/unsloth-zoo/pull/1082). |
+| **Unsloth Zoo** | Add selective response-token loss masking (including `</think>`) across text, vision-collator, and MLX paths, with regression tests: [#852](https://github.com/unslothai/unsloth-zoo/pull/852). |
 | **zkbugs** | Add the public ZisK signed-remainder soundness bug record: [#97](https://github.com/zksecurity/zkbugs/pull/97). |
 
 Also: [JWST image research](https://cerinamroth.com/jwst/lrds/), [security disclosures](https://cerinamroth.com/disclosures/), and [technical and policy consulting](https://jordananderson.work).
