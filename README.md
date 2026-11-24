@@ -21,7 +21,7 @@ loggetta plan Qwen/Qwen3-30B-A3B --seq 2048
 ```
 
 **One install. Check the machine, plan a supported training run, and keep the results.**
-New in [Loggetta 0.6.0](https://github.com/pjordanandrsn/loggetta/blob/main/CHANGELOG.md): an AMD GPU is found and refused by name, and with experts4bit-qlora 0.53.0 or later the `grouped_nf4` MoE backward is priced once.
+New in [Loggetta 0.7.0](https://github.com/pjordanandrsn/loggetta/blob/main/CHANGELOG.md): a first install now ends trained or with a named refusal. `loggetta inspect --torch-index` names the torch build for your NVIDIA driver before torch is installed, and a machine without a working C compiler is refused by name before any download.
 
 | Project | What it does |
 | :--- | :--- |
